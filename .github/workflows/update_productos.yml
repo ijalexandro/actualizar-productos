@@ -1,0 +1,46 @@
+name: Actualizar productos diarios
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  update_csv_and_db:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Descargar Supabase CLI
+        run: |
+          VERSION="1.90.0"
+          curl -L "https://github.com/supabase/cli/releases/download/v${VERSION}/supabase_${VERSION}_linux_amd64.tar.gz" \
+            -o supabase.tar.gz
+          tar xzf supabase.tar.gz supabase
+          sudo mv supabase /usr/local/bin/
+
+      - name: Fetch CSV remoto
+        run: |
+          wget -qO productos.csv \
+            https://fabricstorageeastus.blob.core.windows.net/fabric/Respondio/Productos_Catalogo.csv
+
+      - name: Subir CSV a Supabase Storage
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF:   ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: |
+          supabase storage upload \
+            raw-csv/productos.csv \
+            productos.csv \
+            --project-ref $SUPABASE_PROJECT_REF \
+            --token $SUPABASE_ACCESS_TOKEN \
+            --force
+
+      - name: Importar y upsert en la base
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF:   ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: |
+          supabase db query import_and_upsert.sql \
+            --project-ref $SUPABASE_PROJECT_REF \
+            --token $SUPABASE_ACCESS_TOKEN
