@@ -13,11 +13,12 @@ jobs:
 
       - name: Descargar Supabase CLI
         run: |
-          VERSION="1.90.0"
-          curl -L "https://github.com/supabase/cli/releases/download/v${VERSION}/supabase_${VERSION}_linux_amd64.tar.gz" \
-            -o supabase.tar.gz
-          tar xzf supabase.tar.gz supabase
-          sudo mv supabase /usr/local/bin/
+         VERSION="1.90.0"
+         # Asset correcto para Linux x86_64:
+         curl -L "https://github.com/supabase/cli/releases/download/v${VERSION}/supabase_${VERSION}_linux_x86_64.tar.gz" \
+           -o supabase.tar.gz
+         tar xzf supabase.tar.gz supabase
+         sudo mv supabase /usr/local/bin/
 
       - name: Fetch CSV remoto
         run: |
